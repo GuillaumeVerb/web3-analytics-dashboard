@@ -45,6 +45,18 @@ A production-quality Streamlit application for analyzing Web3 and on-chain data 
 pip install -r requirements.txt
 ```
 
+3. **(Optional) For Dune API Integration**:
+```bash
+# Uncomment dune-client in requirements.txt, then:
+pip install dune-client python-dotenv
+
+# Copy env template and add your API key
+cp env.template .env
+# Edit .env and add your Dune API key
+```
+
+See **[DUNE_SETUP.md](DUNE_SETUP.md)** for complete Dune integration guide.
+
 ### Running the App
 
 ```bash
@@ -86,6 +98,29 @@ block_time,from_address,to_address,amount_usd
 2024-01-01 11:45:00,0xabcd...,0xef01...,2300.75
 ...
 ```
+
+### 🔮 Dune Analytics Integration (NEW!)
+
+Fetch real-time data directly from Dune Analytics:
+
+1. **Get a Dune API key** from [dune.com/settings/api](https://dune.com/settings/api)
+2. **Install dune-client**: Uncomment in `requirements.txt` and run `pip install dune-client`
+3. **Configure**: Copy `env.template` to `.env` and add your API key
+4. **Use in app**: Check "Fetch from Dune API" in sidebar
+
+**Benefits**:
+- ✅ Real-time blockchain data
+- ✅ No CSV size limits
+- ✅ Custom SQL queries
+- ✅ Automated refresh
+
+See **[DUNE_SETUP.md](DUNE_SETUP.md)** for detailed setup guide.
+
+**Popular Queries**:
+- Uniswap V3 swaps volume
+- OpenSea NFT collection stats
+- Aave V3 lending activity
+- Or create your own on [dune.com](https://dune.com)
 
 ## 🏗️ Project Structure
 

@@ -1,6 +1,53 @@
 # Changelog - WDI Dashboard
 
-## Version 1.1.0 (Améliorations Récentes)
+## Version 1.2.0 (Intégration Dune Analytics) 🔮
+
+### 🚀 Nouvelle Fonctionnalité Majeure : API Dune
+
+#### **Module d'intégration Dune Analytics** (`dune_integration.py`)
+- **Description** : Fetch des données en temps réel depuis Dune Analytics
+- **Classe** : `DuneIntegration` avec méthodes pour exécuter des queries
+- **Caching** : Résultats mis en cache 1h pour optimiser les crédits API
+- **UI Components** : Interface Streamlit pour configuration
+
+#### **Fonctionnalités Dune**
+1. ✅ **Fetch automatique** : Exécution de queries Dune par ID
+2. ✅ **Paramètres dynamiques** : Support des query parameters
+3. ✅ **Queries populaires** : Templates pré-configurés (Uniswap, OpenSea, Aave)
+4. ✅ **Gestion d'erreurs** : Messages clairs en cas de problème
+5. ✅ **Sécurité** : Support variables d'environnement et secrets
+
+#### **Documentation complète**
+- **DUNE_SETUP.md** (150+ lignes) :
+  - Guide setup en 5 minutes
+  - Exemples de code
+  - Troubleshooting complet
+  - Best practices
+  - Informations sur les coûts
+- **env.template** : Configuration API key
+- **README.md** : Section dédiée Dune
+
+#### **Queries Pré-configurées**
+```python
+POPULAR_QUERIES = {
+    'uniswap_v3_daily_volume': {...},
+    'opensea_collections': {...},
+    'aave_v3_tvl': {...}
+}
+```
+
+### 📦 Dépendances Ajoutées (Optionnelles)
+- `dune-client>=1.2.0` : SDK officiel Dune
+- `python-dotenv>=1.0.0` : Gestion variables d'environnement
+
+### 🔒 Sécurité
+- `.gitignore` : Ajout `.env` et secrets
+- **env.template** : Template pour configuration sécurisée
+- Aucune clé API hardcodée dans le code
+
+---
+
+## Version 1.1.0 (Améliorations Charts)
 
 ### 🎨 Nouvelles Fonctionnalités
 

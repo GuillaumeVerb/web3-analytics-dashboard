@@ -3,4 +3,9 @@ pandas==2.1.4
 plotly==5.18.0
 numpy==1.26.2
 
+# Optional: Dune Analytics API integration
+# Uncomment if you want to fetch data directly from Dune
+# dune-client>=1.2.0
+# python-dotenv>=1.0.0
+
 
