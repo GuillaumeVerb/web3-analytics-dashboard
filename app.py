@@ -10,6 +10,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
+import io
+import base64
+from PIL import Image
+from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
 
 
 # ============================================================================
@@ -166,20 +170,29 @@ def detect_address_columns(df):
     return address_cols
 
 
-def prepare_dataframe(df, date_col):
+def prepare_dataframe(df, date_col, date_start=None, date_end=None):
     """
-    Prepare dataframe by converting date column to datetime.
+    Prepare dataframe by converting date column to datetime and applying time filters.
     
     Args:
         df: pandas DataFrame
         date_col: Name of the date column
+        date_start: Optional start date filter
+        date_end: Optional end date filter
     
     Returns:
-        pd.DataFrame: Prepared dataframe
+        pd.DataFrame: Prepared and filtered dataframe
     """
     df_copy = df.copy()
     try:
         df_copy[date_col] = pd.to_datetime(df_copy[date_col])
+        
+        # Apply time filters if provided
+        if date_start is not None:
+            df_copy = df_copy[df_copy[date_col].dt.date >= date_start]
+        if date_end is not None:
+            df_copy = df_copy[df_copy[date_col].dt.date <= date_end]
+        
         df_copy = df_copy.sort_values(date_col)
     except Exception as e:
         st.error(f"Error converting date column: {e}")
@@ -325,6 +338,55 @@ def build_top_addresses(df, address_col, value_col, top_n=10):
         return pd.DataFrame()
 
 
+def export_chart_png(fig, filename="chart.png"):
+    """
+    Export Plotly chart to PNG format.
+    
+    Args:
+        fig: Plotly figure object
+        filename: Output filename
+    
+    Returns:
+        bytes: PNG image data, or None if export fails
+    """
+    try:
+        # Try using kaleido (recommended)
+        import plotly.io as pio
+        img_bytes = pio.to_image(fig, format="png", width=1200, height=600, scale=2)
+        return img_bytes
+    except Exception as e:
+        try:
+            # Fallback: try orca
+            img_bytes = fig.to_image(format="png", width=1200, height=600, scale=2)
+            return img_bytes
+        except Exception as e2:
+            st.warning(f"⚠️ PNG export requires 'kaleido'. Install with: pip install kaleido")
+            return None
+
+
+def create_download_button_png(fig, filename, button_text="📥 Download PNG"):
+    """
+    Create a download button for Plotly chart as PNG.
+    
+    Args:
+        fig: Plotly figure object
+        filename: Filename for download
+        button_text: Button label
+    
+    Returns:
+        Streamlit download button component
+    """
+    img_bytes = export_chart_png(fig, filename)
+    if img_bytes:
+        return st.download_button(
+            label=button_text,
+            data=img_bytes,
+            file_name=filename,
+            mime="image/png"
+        )
+    return None
+
+
 def build_cohort_retention(df, date_col, address_col):
     """
     Build a simplified cohort retention analysis.
@@ -401,16 +463,32 @@ def main():
             df = load_data(uploaded_file)
             
             if df is not None:
+                # Auto-detect protocol
+                suggestions, detected_protocol = suggest_columns(df)
+                
                 st.markdown("### ⚙️ Configuration")
+                
+                # Show detected protocol
+                if detected_protocol and detected_protocol != 'generic':
+                    protocol_info = format_protocol_info(detected_protocol)
+                    st.success(f"🔍 Auto-detected: {protocol_info}")
+                    st.caption("Column mappings suggested automatically")
                 
                 # Date column selector
                 date_cols = detect_date_columns(df)
                 if not date_cols:
                     date_cols = list(df.columns)
                 
+                # Helper to get index for selectbox
+                def get_index(suggested_col, available_cols):
+                    if suggested_col and suggested_col in available_cols:
+                        return available_cols.index(suggested_col)
+                    return 0
+                
                 date_col = st.selectbox(
                     "Date Column",
                     options=date_cols,
+                    index=get_index(suggestions.get('date_col'), date_cols),
                     help="Select the column containing timestamps/dates"
                 )
                 
@@ -422,6 +500,7 @@ def main():
                 address_col = st.selectbox(
                     "Address Column",
                     options=address_cols,
+                    index=get_index(suggestions.get('address_col'), address_cols),
                     help="Select the column containing wallet addresses or user IDs"
                 )
                 
@@ -433,6 +512,7 @@ def main():
                 value_col = st.selectbox(
                     "Value Column (USD)",
                     options=numeric_cols,
+                    index=get_index(suggestions.get('value_col'), numeric_cols),
                     help="Select the column containing transaction values in USD"
                 )
                 
@@ -461,6 +541,62 @@ def main():
                     value=True,
                     help="Display cumulative volume growth chart"
                 )
+                
+                st.markdown("---")
+                
+                # Time Filters
+                st.markdown("### 📅 Time Filters")
+                
+                # Prepare date column for filtering
+                df_dates = prepare_dataframe(df, date_col)
+                if not df_dates.empty and date_col in df_dates.columns:
+                    min_date = df_dates[date_col].min().date()
+                    max_date = df_dates[date_col].max().date()
+                    
+                    # Quick filters
+                    time_filter = st.radio(
+                        "Period",
+                        options=["All Time", "Last 7 Days", "Last 30 Days", "Last 90 Days", "Custom Range"],
+                        horizontal=False
+                    )
+                    
+                    date_start = None
+                    date_end = None
+                    
+                    if time_filter == "Last 7 Days":
+                        date_end = max_date
+                        date_start = (pd.Timestamp(max_date) - pd.Timedelta(days=7)).date()
+                    elif time_filter == "Last 30 Days":
+                        date_end = max_date
+                        date_start = (pd.Timestamp(max_date) - pd.Timedelta(days=30)).date()
+                    elif time_filter == "Last 90 Days":
+                        date_end = max_date
+                        date_start = (pd.Timestamp(max_date) - pd.Timedelta(days=90)).date()
+                    elif time_filter == "Custom Range":
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            date_start = st.date_input(
+                                "Start Date",
+                                value=min_date,
+                                min_value=min_date,
+                                max_value=max_date
+                            )
+                        with col2:
+                            date_end = st.date_input(
+                                "End Date",
+                                value=max_date,
+                                min_value=min_date,
+                                max_value=max_date
+                            )
+                    
+                    # Store in session state
+                    st.session_state['date_start'] = date_start
+                    st.session_state['date_end'] = date_end
+                    st.session_state['time_filter'] = time_filter
+                else:
+                    st.session_state['date_start'] = None
+                    st.session_state['date_end'] = None
+                    st.session_state['time_filter'] = "All Time"
                 
                 # Store in session state
                 st.session_state['date_col'] = date_col
@@ -518,13 +654,20 @@ def main():
     top_n = st.session_state.get('top_n', 10)
     show_moving_avg = st.session_state.get('show_moving_avg', True)
     show_cumulative = st.session_state.get('show_cumulative', True)
+    date_start = st.session_state.get('date_start')
+    date_end = st.session_state.get('date_end')
+    time_filter = st.session_state.get('time_filter', 'All Time')
     
     if df is None:
         st.error("Error loading data. Please try uploading the file again.")
         return
     
-    # Prepare dataframe
-    df_prepared = prepare_dataframe(df, date_col)
+    # Prepare dataframe with time filters
+    df_prepared = prepare_dataframe(df, date_col, date_start, date_end)
+    
+    # Show filter info if active
+    if time_filter != "All Time" and date_start and date_end:
+        st.info(f"📅 Filtered to: {time_filter} ({date_start} to {date_end}) - {len(df_prepared):,} rows")
     
     # Show data preview
     with st.expander("🔍 Data Preview", expanded=False):
@@ -657,6 +800,7 @@ def main():
             )
             st.plotly_chart(fig_volume, use_container_width=True)
             st.caption("📊 Daily aggregated transaction volume with 7-day moving average")
+            create_download_button_png(fig_volume, "daily_volume.png", "📥 Export PNG")
         
         with col_chart2:
             st.markdown("### 📊 Daily Transactions")
@@ -692,6 +836,7 @@ def main():
             )
             st.plotly_chart(fig_tx, use_container_width=True)
             st.caption("📊 Daily transaction count with 7-day moving average")
+            create_download_button_png(fig_tx, "daily_transactions.png", "📥 Export PNG")
         
         # Add cumulative volume chart if enabled
         if show_cumulative:
@@ -713,6 +858,58 @@ def main():
             )
             st.plotly_chart(fig_cumulative, use_container_width=True)
             st.caption("📈 Total cumulative volume over time - shows overall growth trajectory")
+            create_download_button_png(fig_cumulative, "cumulative_volume.png", "📥 Export PNG")
+        
+        # Transaction Size Distribution
+        st.markdown("### 📊 Transaction Size Distribution")
+        col_hist1, col_hist2 = st.columns(2)
+        
+        with col_hist1:
+            # Histogram of transaction values
+            fig_hist = px.histogram(
+                df_prepared,
+                x=value_col,
+                nbins=50,
+                labels={value_col: 'Transaction Value (USD)', 'count': 'Frequency'},
+                color_discrete_sequence=['#00d4ff']
+            )
+            fig_hist.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e0e3f0'),
+                xaxis=dict(showgrid=True, gridcolor='#2a2d3a', title='Transaction Value (USD)'),
+                yaxis=dict(showgrid=True, gridcolor='#2a2d3a', title='Number of Transactions'),
+                showlegend=False
+            )
+            st.plotly_chart(fig_hist, use_container_width=True)
+            st.caption("Distribution of transaction sizes - shows volume concentration")
+            create_download_button_png(fig_hist, "tx_distribution.png", "📥 Export PNG")
+        
+        with col_hist2:
+            # Log scale histogram for better visualization
+            df_log = df_prepared[df_prepared[value_col] > 0].copy()
+            if not df_log.empty:
+                fig_hist_log = px.histogram(
+                    df_log,
+                    x=value_col,
+                    nbins=50,
+                    labels={value_col: 'Transaction Value (USD)', 'count': 'Frequency'},
+                    color_discrete_sequence=['#00ff88']
+                )
+                fig_hist_log.update_layout(
+                    xaxis_type="log",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#e0e3f0'),
+                    xaxis=dict(showgrid=True, gridcolor='#2a2d3a', title='Transaction Value (USD, Log Scale)'),
+                    yaxis=dict(showgrid=True, gridcolor='#2a2d3a', title='Number of Transactions'),
+                    showlegend=False
+                )
+                st.plotly_chart(fig_hist_log, use_container_width=True)
+                st.caption("Log-scale distribution - better view of all transaction sizes")
+                create_download_button_png(fig_hist_log, "tx_distribution_log.png", "📥 Export PNG")
+            else:
+                st.info("No positive values to display in log scale")
     
     st.markdown("---")
     
@@ -747,6 +944,7 @@ def main():
                 showlegend=False
             )
             st.plotly_chart(fig_top, use_container_width=True)
+            create_download_button_png(fig_top, "top_addresses.png", "📥 Export PNG")
         
         with col_top2:
             st.markdown("### 📋 Details")
@@ -791,6 +989,7 @@ def main():
             )
             st.plotly_chart(fig_cohort, use_container_width=True)
             st.caption("Percentage of users from each cohort returning in subsequent weeks")
+            create_download_button_png(fig_cohort, "cohort_retention.png", "📥 Export PNG")
         else:
             st.info("Not enough data for cohort analysis. Need multiple weeks of activity.")
     except Exception as e:
