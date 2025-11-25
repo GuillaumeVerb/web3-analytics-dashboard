@@ -5,6 +5,7 @@ A production-quality Streamlit application for analyzing Web3 and on-chain data 
 ![Dashboard Preview](https://img.shields.io/badge/Status-Production--Ready-success)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-red)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io)
 
 ## 🎯 Features
 
@@ -36,7 +37,7 @@ A production-quality Streamlit application for analyzing Web3 and on-chain data 
 
 ## 🚀 Quick Start
 
-### Installation
+### Option 1: Run Locally
 
 1. **Clone or download this repository**
 
@@ -57,13 +58,27 @@ cp env.template .env
 
 See **[DUNE_SETUP.md](DUNE_SETUP.md)** for complete Dune integration guide.
 
-### Running the App
-
+4. **Run the app**:
 ```bash
 streamlit run app.py
 ```
 
 The app will open automatically in your default browser at `http://localhost:8501`
+
+### Option 2: Deploy on Streamlit Cloud (Recommended) ☁️
+
+**Deploy in 5 minutes - FREE!**
+
+1. Go to [share.streamlit.io](https://share.streamlit.io)
+2. Sign in with GitHub
+3. Click "New app"
+4. Select your repo: `GuillaumeVerb/web3-analytics-dashboard`
+5. Set main file: `app.py`
+6. Click "Deploy" 🚀
+
+**Your app will be live at**: `https://your-app-name.streamlit.app`
+
+📖 **Full deployment guide**: See **[DEPLOY_STREAMLIT_CLOUD.md](DEPLOY_STREAMLIT_CLOUD.md)**
 
 ## 📊 Usage Guide
 
