@@ -1,0 +1,8 @@
+# Minimal requirements without kaleido (for troubleshooting)
+# Use this if deployment fails with full requirements.txt
+streamlit==1.29.0
+pandas==2.1.4
+plotly==5.18.0
+numpy==1.26.2
+# Note: PNG export will show warnings but app will work
+
