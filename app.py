@@ -1023,7 +1023,9 @@ def main():
 # RUN APP
 # ============================================================================
 
-# Streamlit Cloud executes the file directly, so we call main() at module level
-main()
+# Streamlit Cloud will execute this file and call main() automatically
+# We use the standard Python pattern for compatibility
+if __name__ == "__main__":
+    main()
 
 
