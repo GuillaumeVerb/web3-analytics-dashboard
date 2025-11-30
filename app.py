@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import base64
-from PIL import Image
 from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
 
 
@@ -1024,7 +1023,7 @@ def main():
 # RUN APP
 # ============================================================================
 
-if __name__ == "__main__":
-    main()
+# Streamlit Cloud executes the file directly, so we call main() at module level
+main()
 
 
