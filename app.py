@@ -5,14 +5,26 @@ Built by WDI – Web3 Data Intelligence
 """
 
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+
+# Check and import required dependencies
+try:
+    import pandas as pd
+    import plotly.express as px
+    import plotly.graph_objects as go
+    import numpy as np
+except ImportError as e:
+    st.error(f"❌ Missing required dependency: {e}")
+    st.stop()
+
 from datetime import datetime, timedelta
-import numpy as np
 import io
 import base64
-from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
+
+try:
+    from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
+except ImportError as e:
+    st.error(f"❌ Missing protocol_templates module: {e}")
+    st.stop()
 
 
 # ============================================================================
