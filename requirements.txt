@@ -1,7 +1,7 @@
-streamlit==1.29.0
-pandas==2.1.4
-plotly==5.18.0
-numpy==1.26.2
+streamlit>=1.29.0
+pandas>=2.1.0
+plotly>=5.18.0
+numpy>=1.26.0
 # kaleido>=0.2.1  # Temporarily disabled - causing deployment issues
 # PNG export will show warnings but app will work fine
 
