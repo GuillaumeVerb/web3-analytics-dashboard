@@ -12,7 +12,18 @@ from datetime import datetime, timedelta
 import numpy as np
 import io
 import base64
-from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
+
+# Optional protocol templates - import in main() to avoid silent failures
+try:
+    from protocol_templates import detect_protocol, suggest_columns, format_protocol_info, get_protocol_template
+    PROTOCOL_TEMPLATES_AVAILABLE = True
+except ImportError:
+    PROTOCOL_TEMPLATES_AVAILABLE = False
+    # Define dummy functions if module not available
+    def detect_protocol(df): return None, {}
+    def suggest_columns(df): return {}, 'generic'
+    def format_protocol_info(protocol): return f"**{protocol}**"
+    def get_protocol_template(protocol): return {}
 
 
 # ============================================================================
