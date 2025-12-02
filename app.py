@@ -19,12 +19,8 @@ from protocol_templates import detect_protocol, suggest_columns, format_protocol
 # CONFIGURATION
 # ============================================================================
 
-st.set_page_config(
-    page_title="WDI – Web3 Analytics Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Page config must be first Streamlit command
+# Moved to main() to avoid issues on Streamlit Cloud
 
 # Custom CSS for dark, minimalistic, premium style
 st.markdown("""
@@ -437,6 +433,14 @@ def build_cohort_retention(df, date_col, address_col):
 
 def main():
     """Main application logic."""
+    
+    # Page configuration (must be first Streamlit command)
+    st.set_page_config(
+        page_title="WDI – Web3 Analytics Dashboard",
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
     
     # ========================================================================
     # SIDEBAR
@@ -1024,7 +1028,8 @@ def main():
 # ============================================================================
 
 # Streamlit Cloud executes the file directly
-# Call main() at module level for Streamlit Cloud compatibility
-main()
+# Use standard pattern - Streamlit will handle execution
+if __name__ == "__main__":
+    main()
 
 
