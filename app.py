@@ -1036,8 +1036,18 @@ def main():
 # ============================================================================
 
 # Streamlit Cloud executes the file directly
-# Use standard pattern - Streamlit will handle execution
-if __name__ == "__main__":
-    main()
+# Call main() - Streamlit will handle execution
+# Using try-except to catch any initialization errors
+try:
+    if __name__ == "__main__":
+        main()
+except Exception as e:
+    # If there's an error before Streamlit is fully initialized,
+    # print it so it appears in logs
+    import sys
+    print(f"Error starting app: {e}", file=sys.stderr)
+    import traceback
+    traceback.print_exc()
+    raise
 
 

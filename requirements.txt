@@ -2,8 +2,9 @@ streamlit==1.29.0
 pandas==2.1.4
 plotly==5.18.0
 numpy==1.26.2
-# kaleido>=0.2.1  # Temporarily disabled - causing deployment issues
-# PNG export will show warnings but app will work fine
+
+# Optional: PNG export (install manually if needed)
+# kaleido>=0.2.1
 
 # Optional: Dune Analytics API integration
 # Uncomment if you want to fetch data directly from Dune
