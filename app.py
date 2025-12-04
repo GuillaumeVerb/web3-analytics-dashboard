@@ -1036,26 +1036,38 @@ def main():
 # ============================================================================
 
 # Streamlit Cloud executes the file directly
-# We call main() - Streamlit will handle the execution
-# Wrap in try-except to catch any errors and display them
+# Standard pattern: call main() only when script is run directly
+# Streamlit Cloud will execute this file, so __name__ will be "__main__"
+import sys
+import traceback
+
+# Add diagnostic logging
+print("=" * 50, file=sys.stderr)
+print(f"Starting app.py - __name__ = {__name__}", file=sys.stderr)
+print("=" * 50, file=sys.stderr)
+
 try:
     if __name__ == "__main__":
+        print("Calling main()...", file=sys.stderr)
         main()
+        print("main() completed successfully", file=sys.stderr)
     else:
-        # On Streamlit Cloud, __name__ might be the module name
-        # Call main() anyway - Streamlit will handle it
-        main()
+        print(f"Not calling main() - __name__ is '{__name__}'", file=sys.stderr)
 except Exception as e:
-    # Display error in Streamlit UI
-    st.error(f"❌ Error starting application: {e}")
-    st.exception(e)
-    # Also print to stderr for logs
-    import sys
-    import traceback
+    # Print error to stderr (will appear in Streamlit Cloud logs)
     print("=" * 50, file=sys.stderr)
-    print("ERROR STARTING APP", file=sys.stderr)
+    print("ERROR IN APP.PY", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
+    print(f"Error type: {type(e).__name__}", file=sys.stderr)
+    print(f"Error message: {str(e)}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
     print("=" * 50, file=sys.stderr)
+    
+    # Try to display in Streamlit UI (may fail if Streamlit not initialized)
+    try:
+        st.error(f"❌ Error starting application: {e}")
+        st.exception(e)
+    except:
+        pass  # Streamlit may not be initialized yet
 
 
